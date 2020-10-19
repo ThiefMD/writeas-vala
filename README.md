@@ -147,8 +147,7 @@ bool client.publish_post (
             string font = "serif",
             string lang = "en",
             bool rtl = false,
-            string created = "",
-            string user_token = "")
+            string created = "")
 ```
 
 Returns true if post is published, false if the post is not published.
@@ -167,8 +166,7 @@ bool client.publish_collection_post (
             string font = "serif",
             string lang = "en",
             bool rtl = false,
-            string created = "",
-            string user_token = "")
+            string created = "")
 ```
 
 Returns true if post is published, false if the post is not published.
