@@ -36,3 +36,6 @@ build
 build/*
 .vscode/*
 .vscode
+examples
+examples/*
+examples/hello-writeas.vala
