@@ -56,6 +56,14 @@ if (client.set_token (access_token)) {
 }
 ```
 
+## Logout
+
+```vala
+bool client.logout ()
+```
+
+Returns true if the client successfully logged out, false otherwise.
+
 ## Using a different endpoint
 
 ```vala
