@@ -54,6 +54,16 @@ if (client.set_token (access_token)) {
 }
 ```
 
+## Using a different endpoint
+
+```vala
+Writeas.Client client = new Writeas.Client ("https://write-freely-host.example/api");
+string access_token;
+if (client.authenticate ("user", "pass", out access_token)) {
+    print ("You logged in! Now get writing!");
+}
+```
+
 ## Determining who's logged in
 
 ```vala
