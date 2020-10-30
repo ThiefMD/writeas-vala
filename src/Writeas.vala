@@ -23,6 +23,10 @@ namespace Writeas {
                 endpoint = uri;
             }
 
+            if (!endpoint.has_prefix ("http")) {
+                endpoint = "https://" + endpoint;
+            }
+
             authenticated_user = null;
         }
 
