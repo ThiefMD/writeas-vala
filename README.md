@@ -181,6 +181,19 @@ Returns true if post is published, false if the post is not published.
 
 User must be logged in.
 
+## Upload an Image
+
+```vala
+bool upload_image_simple (
+    out string file_url,
+    string local_file_path,
+    string user_token = "")
+```
+
+Returns true if image is uploaded, false if the image is not uploaded.
+
+User must be logged in. **_Currently works with [Write.as](https://write.as) Pro Plan_**.
+
 ## Getting a Post
 
 ```vala

@@ -9,9 +9,11 @@ namespace Writeas {
     public const string USER_POSTS = "me/posts";
     public const string USER_COLLECTIONS = "me/collections";
     public const string USER_CHANNELS = "me/channels";
+    public const string IMAGE_UPLOAD = "photos/upload";
 
     public class Client {
         public string endpoint = "https://write.as/api/";
+        public string image_endpoint = "https://snap.as/api/";
         private string? authenticated_user;
 
         public Client (string url = "") {
@@ -96,6 +98,95 @@ namespace Writeas {
             }
 
             return post_deleted;
+        }
+
+        public bool upload_image_simple (
+            out string file_url,
+            string local_file_path,
+            string user_token = ""
+        )
+        {
+            file_url = "";
+            // @TODO: Need to see how snap.as works on other hosts
+            if (!endpoint.has_prefix ("https://write.as/")) {
+                warning ("Image upload only supported for Write.as at the moment");
+                return false;
+            }
+
+            string auth_token = "";
+            bool result = false;
+            if (user_token == "" && authenticated_user != null) {
+                auth_token = authenticated_user;
+            } else {
+                auth_token = user_token;
+            }
+
+            if (auth_token == "") {
+                warning ("Image upload requires authentication token");
+                return false;
+            }
+
+            File upload_file = File.new_for_path (local_file_path);
+            string file_mimetype = "application/octet-stream";
+
+            if (!upload_file.query_exists ()) {
+                warning ("Invalid file provided");
+                return false;
+            }
+
+            uint8[] file_data;
+            try {
+                GLib.FileUtils.get_data(local_file_path, out file_data);
+            } catch (GLib.FileError e) {
+                warning(e.message);
+                return false;
+            }
+
+            bool uncertain = false;
+            string? st = ContentType.guess (upload_file.get_basename (), file_data, out uncertain);
+            if (!uncertain || st != null) {
+                file_mimetype = ContentType.get_mime_type (st);
+            }
+
+            debug ("Will upload %s : %s", file_mimetype, local_file_path);
+
+            Soup.Buffer buffer = new Soup.Buffer.take(file_data);
+            Soup.Multipart multipart = new Soup.Multipart("multipart/form-data");
+            multipart.append_form_file ("file", upload_file.get_path (), file_mimetype, buffer);
+            // multipart.append_form_string ("ref", Soup.URI.encode(upload_file.get_basename ()), file_mimetype, buffer);
+
+            WebCall call = new WebCall (image_endpoint, IMAGE_UPLOAD);
+            call.set_multipart (multipart);
+            call.add_header ("Authorization", "%s".printf (auth_token));
+            call.perform_call ();
+
+            if (call.response_code >= 200 && call.response_code < 300) {
+                result = true;
+            }
+
+            try {
+                var parser = new Json.Parser ();
+                parser.load_from_data (call.response_str);
+                Json.Node data = parser.get_root ();
+                ImageResponse response = Json.gobject_deserialize (
+                    typeof (ImageResponse),
+                    data)
+                    as ImageResponse;
+
+                if (response != null) {
+                    if (response.code == 201) {
+                        result = true;
+                        file_url = response.data.url;
+                    } else {
+                        warning ("Error (%d): %s", response.code, response.error_msg);
+                    }
+                }
+            } catch (Error e) {
+                warning ("Error parsing response: %s", e.message);
+                warning (call.response_str);
+            }
+
+            return result;
         }
 
         public bool delete_post (
@@ -724,6 +815,10 @@ namespace Writeas {
         public Post data { get; set; }
     }
 
+    public class ImageResponse : Response {
+        public Image data { get; set; }
+    }
+
     public class MarkdownResponse : Response {
         public MarkdownData data { get; set; }
     }
@@ -733,11 +828,17 @@ namespace Writeas {
     }
 
     public class UserPosts : Response {
-        public Post[] data { get; set; }
     }
 
     public class UserCollections : Response {
-        public Collection[] data { get; set; }
+    }
+
+    public class Image : GLib.Object, Json.Serializable {
+        public string id { get; set; }
+        public string body { get; set; }
+        public string filename { get; set; }
+        public int size { get; set; }
+        public string url { get; set; }
     }
 
     public class Post : GLib.Object, Json.Serializable {
@@ -832,6 +933,7 @@ namespace Writeas {
         private Soup.Message message;
         private string url;
         private string body;
+        private bool is_mime = false;
 
         public string response_str;
         public uint response_code;
@@ -846,12 +948,14 @@ namespace Writeas {
             body = data;
         }
 
+        public void set_multipart (Soup.Multipart multipart) {
+            message = Soup.Form.request_new_from_multipart (url, multipart);
+            add_header ("Content-Type", Soup.FORM_MIME_TYPE_MULTIPART);
+            is_mime = true;
+        }
+
         public void set_get () {
             message = new Soup.Message ("GET", url);
-        }
-        
-        public void set_put () {
-            message = new Soup.Message ("PUT", url);
         }
 
         public void set_delete () {
@@ -873,7 +977,9 @@ namespace Writeas {
             if (body != "") {
                 message.set_request ("application/json", Soup.MemoryUse.COPY, body.data);
             } else {
-                add_header ("Content-Type", "application/json");
+                if (!is_mime) {
+                    add_header ("Content-Type", "application/json");
+                }
             }
 
             session.send_message (message);
