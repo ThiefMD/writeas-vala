@@ -1,13 +1,8 @@
 namespace Writeas {
     public const string RENDER_MARKDOWN = "markdown";
-    public const string POST = "posts";
     public const string CLAIM_POST = "posts/claim";
-    public const string COLLECTION = "collections";
-    public const string LOGIN = "auth/login";
     public const string LOGOUT = "auth/me";
     public const string USER = "me";
-    public const string USER_POSTS = "me/posts";
-    public const string USER_COLLECTIONS = "me/collections";
     public const string USER_CHANNELS = "me/channels";
     public const string IMAGE_UPLOAD = "photos/upload";
 
@@ -216,7 +211,7 @@ namespace Writeas {
             generate.set_pretty (false);
             string request_body = generate.to_data (null);
 
-            WebCall delete_post = new WebCall (endpoint, POST + "/" + post_id);
+            WebCall delete_post = new WebCall (endpoint, "posts/" + post_id);
             delete_post.set_delete ();
             delete_post.set_body (request_body);
             if (auth_token != "") {
@@ -285,7 +280,7 @@ namespace Writeas {
             generate.set_pretty (false);
             string request_body = generate.to_data (null);
 
-            WebCall make_post = new WebCall (endpoint, POST + "/" + post_id);
+            WebCall make_post = new WebCall (endpoint, "posts/" + post_id);
             make_post.set_get ();
             make_post.set_body (request_body);
             if (auth_token != "") {
@@ -325,7 +320,7 @@ namespace Writeas {
                 return false;
             }
 
-            WebCall get_existing_post = new WebCall (endpoint, POST + "/" + post_id);
+            WebCall get_existing_post = new WebCall (endpoint, "posts/" + post_id);
             get_existing_post.set_get ();
             get_existing_post.perform_call ();
 
@@ -394,7 +389,7 @@ namespace Writeas {
             generate.set_pretty (false);
             string request_body = generate.to_data (null);
 
-            WebCall make_post = new WebCall (endpoint, COLLECTION + "/" + collection_alias + "/posts");
+            WebCall make_post = new WebCall (endpoint, "collections/" + collection_alias + "/posts");
             make_post.set_post ();
             make_post.set_body (request_body);
             make_post.add_header ("Authorization", "Token %s".printf (auth_token));
@@ -461,7 +456,7 @@ namespace Writeas {
             generate.set_pretty (false);
             string request_body = generate.to_data (null);
 
-            WebCall make_post = new WebCall (endpoint, POST);
+            WebCall make_post = new WebCall (endpoint, "posts");
             make_post.set_post ();
             make_post.set_body (request_body);
             if (auth_token != "") {
@@ -550,7 +545,7 @@ namespace Writeas {
                 return false;
             }
 
-            WebCall collection_call = new WebCall (endpoint, USER_COLLECTIONS);
+            WebCall collection_call = new WebCall (endpoint, "me/collections");
             collection_call.set_get ();
             collection_call.add_header ("Authorization", "Token %s".printf (auth_token));
 
@@ -601,7 +596,7 @@ namespace Writeas {
                 return false;
             }
 
-            WebCall post_call = new WebCall (endpoint, USER_POSTS);
+            WebCall post_call = new WebCall (endpoint, "me/posts");
             post_call.set_get ();
             post_call.add_header ("Authorization", "Token %s".printf (auth_token));
 
@@ -738,7 +733,7 @@ namespace Writeas {
             generate.set_pretty (false);
             string request_body = generate.to_data (null);
 
-            WebCall authentication = new WebCall (endpoint, LOGIN);
+            WebCall authentication = new WebCall (endpoint, "auth/login");
             authentication.set_body (request_body);
             authentication.set_post ();
             bool res = authentication.perform_call ();
