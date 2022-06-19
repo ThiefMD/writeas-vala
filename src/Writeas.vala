@@ -966,6 +966,7 @@ namespace Writeas {
         }
 
         public bool perform_call () {
+            MainLoop loop = new MainLoop ();
             bool success = false;
             debug ("Calling %s", url);
 
@@ -977,20 +978,23 @@ namespace Writeas {
                 }
             }
 
-            session.send_message (message);
-            response_str = (string) message.response_body.flatten ().data;
-            response_code = message.status_code;
+            session.queue_message (message, (sess, mess) => {
+                response_str = (string) mess.response_body.flatten ().data;
+                response_code = mess.status_code;
 
-            if (response_str != null && response_str != "") {
-                success = true;
-                debug ("Non-empty body");
-            }
+                if (response_str != null && response_str != "") {
+                    success = true;
+                    debug ("Non-empty body");
+                }
 
-            if (response_code >= 200 && response_code <= 250) {
-                success = true;
-                debug ("Success HTTP code");
-            }
+                if (response_code >= 200 && response_code <= 250) {
+                    success = true;
+                    debug ("Success HTTP code");
+                }
+                loop.quit ();
+            });
 
+            loop.run ();
             return success;
         }
     }
