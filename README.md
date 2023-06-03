@@ -6,6 +6,8 @@ Unofficial [Write.as](https://write.as) API client library for Vala. Still a wor
 
 I recommend including `writeas-vala` as a git submodule and adding `writeas-vala/src/Writeas.vala` to your sources list. This will avoid packaging conflicts and remote build system issues until I learn a better way to suggest this.
 
+For libsoup3, use `writeas-vala/src/Writeas3.vala`.
+
 ### Requirements
 
 ```
